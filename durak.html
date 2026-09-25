@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1b0f08">
+<title>Дурак 3D</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(circle at 50% 30%,#3a2213,#120804 75%);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fff;touch-action:manipulation;
+    user-select:none;-webkit-user-select:none;overscroll-behavior:none}
+  #scene{position:fixed;inset:0;perspective-origin:50% 50%;overflow:hidden}
+  #plane{position:absolute;left:0;top:0;transform-style:preserve-3d;transform-origin:50% 50%}
+  #felt{position:absolute;left:-40%;top:-45%;width:180%;height:175%;border-radius:60px;
+    background:radial-gradient(ellipse at 50% 55%,#2f8a4f 0%,#1d6a3a 45%,#0f4424 80%);
+    box-shadow:inset 0 0 0 18px #6b3b1c,inset 0 0 0 24px #3d200d,inset 0 0 120px rgba(0,0,0,.6);transform:translateZ(-2px)}
+  #felt::after{content:"";position:absolute;inset:0;border-radius:inherit;opacity:.18;
+    background:repeating-linear-gradient(45deg,rgba(255,255,255,.08) 0 2px,transparent 2px 5px)}
+  .card{position:absolute;left:0;top:0;transform-style:preserve-3d;
+    transition:transform .5s cubic-bezier(.2,.8,.25,1);cursor:pointer}
+  .face{position:absolute;inset:0;border-radius:9%;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    box-shadow:0 2px 3px rgba(0,0,0,.35),0 0 0 1px rgba(0,0,0,.25)}
+  .front{background:linear-gradient(160deg,#fffef8,#ece8dc);color:#1b1b1b;overflow:hidden}
+  .front.red{color:#c8102e}
+  .back{transform:rotateY(180deg);background:
+    repeating-linear-gradient(45deg,rgba(255,255,255,.14) 0 3px,transparent 3px 8px),
+    repeating-linear-gradient(-45deg,rgba(255,255,255,.14) 0 3px,transparent 3px 8px),
+    linear-gradient(135deg,#8e1b24,#5a0c14);border:calc(var(--cw)*.06) solid #f3ead6}
+  .corner{position:absolute;line-height:.95;text-align:center;font-weight:700;font-size:calc(var(--cw)*.26)}
+  .corner.tl{left:6%;top:4%}
+  .corner.br{right:6%;bottom:4%;transform:rotate(180deg)}
+  .corner small{display:block;font-size:.85em}
+  .pip{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);font-size:calc(var(--cw)*.62)}
+  .pip.face-letter{font-size:calc(var(--cw)*.5);font-weight:800;font-family:Georgia,serif}
+  .card.playable .front{box-shadow:0 0 0 2px #ffd54a,0 0 14px rgba(255,213,74,.8)}
+  .card.sel .front{box-shadow:0 0 0 3px #fff,0 0 22px #ffd54a}
+  .card.target .front{box-shadow:0 0 0 3px #4fc3f7,0 0 20px #4fc3f7}
+  .card.bad .front{box-shadow:0 0 0 3px #ff3b3b,0 0 18px #ff3b3b}
+  .card.trump-mark .front::after{content:"★";position:absolute;right:7%;top:3%;font-size:calc(var(--cw)*.2);color:#d99a00}
+  .badge{position:absolute;left:0;top:0;padding:3px 9px;border-radius:12px;background:rgba(0,0,0,.55);
+    font-size:13px;font-weight:700;white-space:nowrap;transform-style:preserve-3d;pointer-events:none;transition:transform .4s}
+  #hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 8px) 12px 0;display:flex;
+    justify-content:space-between;align-items:flex-start;pointer-events:none;gap:8px}
+  #status{flex:1;text-align:center;font-weight:700;font-size:clamp(14px,3.8vw,19px);text-shadow:0 2px 6px #000;
+    background:rgba(0,0,0,.35);border-radius:14px;padding:6px 10px;margin:0 auto;max-width:520px}
+  .hudbtn{pointer-events:auto;border:0;border-radius:12px;background:rgba(0,0,0,.45);color:#fff;font-size:18px;
+    width:40px;height:40px;cursor:pointer}
+  #score{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 3px);font-size:11px;opacity:.7;
+    text-align:center;pointer-events:none}
+  #action{position:fixed;left:50%;top:64%;transform:translate(-50%,-50%) scale(.8);opacity:0;pointer-events:none;
+    border:0;border-radius:30px;padding:14px 34px;font-size:clamp(17px,4.5vw,22px);font-weight:800;letter-spacing:.5px;
+    color:#2a1600;background:linear-gradient(#ffe27a,#f5b300);box-shadow:0 6px 0 #a86f00,0 10px 20px rgba(0,0,0,.5);
+    transition:transform .2s,opacity .2s;cursor:pointer}
+  #action.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+  #action:active{transform:translate(-50%,-46%) scale(.97);box-shadow:0 2px 0 #a86f00}
+  #action.take{background:linear-gradient(#ff8a80,#e53935);color:#fff;box-shadow:0 6px 0 #8e1b1b,0 10px 20px rgba(0,0,0,.5)}
+  #overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);
+    backdrop-filter:blur(3px);z-index:10}
+  #overlay[hidden]{display:none}
+  .dialog{background:linear-gradient(#2c1a0e,#1a0e06);border:2px solid #b8862b;border-radius:22px;padding:26px 26px 22px;
+    text-align:center;max-width:88vw;width:340px;box-shadow:0 20px 60px #000}
+  .dialog h1{margin:0 0 8px;font-size:30px;color:#ffd54a}
+  .dialog p{margin:0 0 20px;opacity:.9;line-height:1.4}
+  .dialog button{border:0;border-radius:26px;padding:13px 30px;font-size:18px;font-weight:800;color:#2a1600;
+    background:linear-gradient(#ffe27a,#f5b300);box-shadow:0 5px 0 #a86f00;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="scene"><div id="plane"><div id="felt"></div></div></div>
+<div id="hud">
+  <button class="hudbtn" id="restartBtn" aria-label="Новая игра" title="Новая игра">↻</button>
+  <div id="status">Дурак</div>
+  <button class="hudbtn" id="helpBtn" aria-label="Правила" title="Правила">?</button>
+</div>
+<div id="score"></div>
+<button id="action"></button>
+<div id="overlay"><div class="dialog">
+  <h1 id="dlgTitle">Дурак 3D</h1>
+  <p id="dlgText">Подкидной дурак против компьютера.<br>Колода 36 карт, козырь — нижняя карта.<br><br>
+    <b>Нажмите на карту</b>, чтобы походить или подкинуть.<br>Защищаясь, нажмите карту — она побьёт подходящую;
+    если вариантов несколько, затем нажмите карту на столе.</p>
+  <button id="dlgBtn">Играть</button>
+</div></div>
+
+<script>
+(() => {
+  'use strict';
+  const SUITS = ['♠', '♣', '♦', '♥'];
+  const RED = new Set(['♦', '♥']);
+  const RANK_NAME = { 6: '6', 7: '7', 8: '8', 9: '9', 10: '10', 11: 'В', 12: 'Д', 13: 'К', 14: 'Т' };
+  const TILT = 26 * Math.PI / 180;
+
+  const plane = document.getElementById('plane');
+  const sceneEl = document.getElementById('scene');
+  const statusEl = document.getElementById('status');
+  const scoreEl = document.getElementById('score');
+  const actionBtn = document.getElementById('action');
+  const overlay = document.getElementById('overlay');
+
+  let W, H, P, cw, ch;
+  const cards = [];
+  let S = null;          // game state
+  let busy = false;
+  let timer = null;
+  let selected = null;
+  let score = JSON.parse(localStorage.getItem('durak3d-score') || '{"w":0,"l":0,"d":0}');
+
+  // ---------- cards / DOM ----------
+  for (const s of SUITS) for (let r = 6; r <= 14; r++) {
+    const el = document.createElement('div');
+    el.className = 'card';
+    const name = RANK_NAME[r];
+    const center = r >= 11 ? `<div class="pip face-letter">${name}${s}</div>` : `<div class="pip">${s}</div>`;
+    el.innerHTML = `<div class="face front${RED.has(s) ? ' red' : ''}">
+      <div class="corner tl">${name}<small>${s}</small></div>${center}
+      <div class="corner br">${name}<small>${s}</small></div></div><div class="face back"></div>`;
+    const card = { s, r, el, id: cards.length };
+    el.addEventListener('click', (e) => { e.stopPropagation(); onCardTap(card); });
+    plane.appendChild(el);
+    cards.push(card);
+  }
+  const mkBadge = () => { const b = document.createElement('div'); b.className = 'badge'; plane.appendChild(b); return b; };
+  const deckBadge = mkBadge(), aiBadge = mkBadge(), trumpBadge = mkBadge();
+
+  // ---------- geometry ----------
+  // Map a desired screen point to plane coordinates, accounting for the tilt and perspective.
+  function toPlane(sx, sy) {
+    const s = sy - H / 2;
+    const v = P * s / (P * Math.cos(TILT) + s * Math.sin(TILT));
+    const scale = P / (P - v * Math.sin(TILT));
+    return { x: W / 2 + (sx - W / 2) / scale, y: H / 2 + v };
+  }
+  function resize() {
+    W = window.innerWidth; H = window.innerHeight;
+    P = Math.max(W, H) * 1.35;
+    cw = Math.max(40, Math.min(W / 6.4, H / 7.2, 104));
+    ch = cw * 1.42;
+    sceneEl.style.perspective = P + 'px';
+    plane.style.width = W + 'px'; plane.style.height = H + 'px';
+    plane.style.transform = `rotateX(${TILT}rad)`;
+    document.documentElement.style.setProperty('--cw', cw + 'px');
+    for (const c of cards) { c.el.style.width = cw + 'px'; c.el.style.height = ch + 'px'; }
+    if (S) render();
+  }
+  function place(card, o) {
+    const { x, y, z = 0, rz = 0, rx = 0, up = true, sc = 1, delay = 0 } = o;
+    card.el.style.transitionDelay = delay + 'ms';
+    card.el.style.transform =
+      `translate3d(${x - cw / 2}px,${y - ch / 2}px,${z}px) rotateZ(${rz}deg) rotateX(${rx}deg) rotateY(${up ? 0 : 180}deg) scale(${sc})`;
+  }
+  function placeBadge(b, sx, sy, text, z = 40) {
+    const p = toPlane(sx, sy);
+    b.textContent = text; b.style.display = text ? '' : 'none';
+    b.style.transform = `translate3d(${p.x}px,${p.y}px,${z}px) translate(-50%,-50%) rotateX(${-TILT}rad)`;
+  }
+
+  // ---------- rules ----------
+  const other = (who) => (who === 'p' ? 'ai' : 'p');
+  const beats = (d, a) => (d.s === a.s && d.r > a.r) || (d.s === S.trump && a.s !== S.trump);
+  const val = (c) => c.r + (c.s === S.trump ? 100 : 0);
+  const byVal = (a, b) => val(a) - val(b);
+  const unbeaten = () => S.table.filter((p) => !p.d);
+  function canAdd(card) {
+    if (S.table.length >= S.limit) return false;
+    if (unbeaten().length >= S.hands[S.defender].length) return false;
+    if (!S.table.length) return true;
+    return S.table.some((p) => p.a.r === card.r || (p.d && p.d.r === card.r));
+  }
+  function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  function removeFrom(arr, c) { const i = arr.indexOf(c); if (i >= 0) arr.splice(i, 1); }
+
+  function later(fn, ms) {
+    busy = true; render();
+    timer = setTimeout(() => { busy = false; timer = null; fn(); render(); }, ms);
+  }
+  function setStatus(t) { statusEl.textContent = t; }
+
+  function newGame() {
+    clearTimeout(timer); busy = false; selected = null;
+    const deck = shuffle(cards.slice());
+    S = { deck, trump: deck[0].s, hands: { p: [], ai: [] }, table: [], discard: [], attacker: 'p', defender: 'ai',
+      limit: 6, taking: false, over: false, fresh: new Map() };
+    // everything starts in the deck
+    render(true);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      refill(['p', 'ai']);
+      const low = (who) => Math.min(...S.hands[who].filter((c) => c.s === S.trump).map((c) => c.r), 99);
+      const lp = low('p'), la = low('ai');
+      S.attacker = la < lp ? 'ai' : 'p';
+      S.defender = other(S.attacker);
+      startRound(S.attacker === 'ai'
+        ? `Козырь ${S.trump}. У соперника младший козырь — он ходит`
+        : `Козырь ${S.trump}. Ваш ход`);
+    }));
+  }
+
+  function refill(order) {
+    let k = 0;
+    for (const who of order) {
+      while (S.hands[who].length < 6 && S.deck.length) {
+        const c = S.deck.pop();
+        S.hands[who].push(c);
+        S.fresh.set(c, k++ * 70);
+      }
+    }
+  }
+
+  function startRound(msg) {
+    S.table = []; S.taking = false; selected = null;
+    S.limit = Math.min(6, S.hands[S.defender].length);
+    if (S.attacker === 'ai') {
+      setStatus(msg || 'Ходит соперник…');
+      later(aiAttack, 900);
+    } else {
+      setStatus(msg || 'Ваш ход — выберите карту');
+      render();
+    }
+  }
+
+  function attack(card, who) {
+    removeFrom(S.hands[who], card);
+    S.table.push({ a: card, d: null });
+  }
+
+  function endBito() {
+    for (const p of S.table) { S.discard.push(p.a); if (p.d) S.discard.push(p.d); }
+    S.table = [];
+    refill([S.attacker, S.defender]);
+    const prevDef = S.defender;
+    S.attacker = prevDef; S.defender = other(prevDef);
+    if (checkEnd()) return;
+    startRound(S.attacker === 'p' ? 'Бито! Ваш ход' : 'Бито! Ходит соперник…');
+  }
+
+  function endTake() {
+    const who = S.defender;
+    for (const p of S.table) { S.hands[who].push(p.a); if (p.d) S.hands[who].push(p.d); }
+    S.table = [];
+    refill([S.attacker, S.defender]);
+    if (checkEnd()) return;
+    startRound(who === 'p' ? 'Вы взяли. Ходит соперник…' : 'Соперник взял. Ваш ход');
+  }
+
+  function checkEnd() {
+    if (S.deck.length) return false;
+    const pe = !S.hands.p.length, ae = !S.hands.ai.length;
+    if (!pe && !ae) return false;
+    S.over = true;
+    let title, text;
+    if (pe && ae) { title = 'Ничья!'; text = 'Оба остались без карт.'; score.d++; }
+    else if (pe) { title = 'Победа! 🎉'; text = 'Дурак — соперник.'; score.w++; }
+    else { title = 'Вы — дурак 🤡'; text = 'Соперник избавился от карт первым.'; score.l++; }
+    localStorage.setItem('durak3d-score', JSON.stringify(score));
+    setStatus(title);
+    render();
+    setTimeout(() => showDialog(title, text, 'Ещё раз'), 900);
+    return true;
+  }
+
+  // ---------- AI ----------
+  function aiAttack() {
+    const c = S.hands.ai.slice().sort(byVal)[0];
+    attack(c, 'ai');
+    setStatus('Отбивайтесь или «Беру»');
+  }
+
+  function aiAddOrBito() {
+    const c = S.hands.ai.filter(canAdd)
+      .filter((c) => !S.deck.length || (c.s !== S.trump && c.r <= 12))
+      .sort(byVal)[0];
+    if (c) { attack(c, 'ai'); setStatus('Соперник подкинул — отбивайтесь'); }
+    else { setStatus('Бито'); later(endBito, 700); }
+  }
+
+  function aiDefend() {
+    const hand = S.hands.ai.slice();
+    const plan = [];
+    for (const p of unbeaten()) {
+      const opts = hand.filter((c) => beats(c, p.a)).sort(byVal);
+      const c = opts[0];
+      // Avoid spending high trumps on cheap cards early in the game.
+      if (!c || (c.s === S.trump && p.a.s !== S.trump && S.deck.length > 8 && c.r >= 12)) return aiTake();
+      plan.push([p, c]); removeFrom(hand, c);
+    }
+    for (const [p, c] of plan) { p.d = c; removeFrom(S.hands.ai, c); }
+    if (!S.hands.p.some(canAdd)) { setStatus('Отбито. Бито'); later(endBito, 900); }
+    else setStatus('Отбито. Подкиньте или «Бито»');
+  }
+
+  function aiTake() {
+    S.taking = true;
+    if (!S.hands.p.some(canAdd)) { setStatus('Соперник берёт'); later(endTake, 1000); }
+    else setStatus('Соперник берёт — подкиньте или «Пас»');
+  }
+
+  function aiThrowIn() {
+    const c = S.hands.ai.filter(canAdd)
+      .filter((c) => c.s !== S.trump && (c.r <= 11 || !S.deck.length))
+      .sort(byVal)[0];
+    if (c) { attack(c, 'ai'); setStatus('Соперник подкидывает…'); later(aiThrowIn, 500); }
+    else later(endTake, 600);
+  }
+
+  // ---------- player input ----------
+  function flashBad(card) {
+    card.el.classList.add('bad');
+    setTimeout(() => card.el.classList.remove('bad'), 450);
+  }
+
+  function onCardTap(card) {
+    if (!S || S.over || busy) return;
+    const inHand = S.hands.p.includes(card);
+    const pair = S.table.find((p) => p.a === card && !p.d);
+
+    if (!inHand) {
+      if (pair && selected && S.defender === 'p' && beats(selected, pair.a)) defendWith(pair, selected);
+      return;
+    }
+
+    if (S.attacker === 'p') {
+      const phaseOk = !S.table.length || S.taking || !unbeaten().length;
+      if (!phaseOk || !canAdd(card)) return flashBad(card);
+      attack(card, 'p');
+      if (S.taking) {
+        if (!S.hands.p.some(canAdd)) { setStatus('Соперник забирает'); later(endTake, 800); }
+        else setStatus('Подкиньте ещё или «Пас»');
+      } else {
+        setStatus('Соперник думает…');
+        later(aiDefend, 750);
+      }
+      return;
+    }
+
+    // defending
+    if (S.taking) return;
+    const targets = unbeaten().filter((p) => beats(card, p.a));
+    if (!targets.length) { selected = null; render(); return flashBad(card); }
+    if (targets.length === 1) return defendWith(targets[0], card);
+    selected = selected === card ? null : card;
+    setStatus(selected ? 'Выберите карту на столе, которую бьёте' : 'Отбивайтесь или «Беру»');
+    render();
+  }
+
+  function defendWith(pair, card) {
+    removeFrom(S.hands.p, card);
+    pair.d = card;
+    selected = null;
+    if (!unbeaten().length) { setStatus('Отбито!'); later(aiAddOrBito, 750); }
+    else { setStatus('Отбивайтесь дальше'); render(); }
+  }
+
+  actionBtn.addEventListener('click', () => {
+    if (!S || S.over || busy) return;
+    const a = actionBtn.dataset.act;
+    if (a === 'take') {
+      S.taking = true; selected = null;
+      setStatus('Вы берёте…');
+      later(aiThrowIn, 500);
+    } else if (a === 'bito') { endBito(); }
+    else if (a === 'pass') { endTake(); }
+  });
+
+  // ---------- render ----------
+  function render(instant) {
+    const fresh = S.fresh; S.fresh = new Map();
+    const pos = new Map();
+
+    // deck: trump at bottom rotated, face up
+    const sideX = Math.max(cw * 0.95, W * 0.13, 64);
+    const deckS = { x: sideX, y: H * 0.3 };
+    const dp = toPlane(deckS.x, deckS.y);
+    S.deck.forEach((c, i) => {
+      if (i === 0) pos.set(c, { x: dp.x + cw * 0.38, y: dp.y, z: 0, rz: 90, up: true });
+      else pos.set(c, { x: dp.x, y: dp.y, z: 2 + i * 0.6, rz: -4 + (i % 3), up: false });
+    });
+
+    // discard pile
+    const bp = toPlane(W - sideX, H * 0.3);
+    S.discard.forEach((c, i) => pos.set(c, { x: bp.x + ((c.id * 7) % 13) - 6, y: bp.y + ((c.id * 5) % 11) - 5,
+      z: 1 + i * 0.5, rz: ((c.id * 37) % 60) - 30, up: false }));
+
+    // AI hand (top)
+    const ah = S.hands.ai, an = ah.length;
+    const aiY = Math.max(H * 0.11, 58 + ch * 0.42);
+    const aSp = an > 1 ? Math.min(cw * 0.55, (W * 0.8 - cw) / (an - 1)) : 0;
+    ah.forEach((c, i) => {
+      const off = i - (an - 1) / 2;
+      const p = toPlane(W / 2 + off * aSp, aiY + off * off * 0.8);
+      pos.set(c, { x: p.x, y: p.y, z: 4 + i * 0.8, rz: 180 - off * 3, up: false });
+    });
+
+    // table
+    const n = S.table.length;
+    const cols = Math.min(n, W > H * 1.2 ? 6 : 3) || 1;
+    const rows = Math.ceil(n / cols);
+    S.table.forEach((pr, i) => {
+      const row = Math.floor(i / cols), col = i % cols;
+      const inRow = row === rows - 1 ? n - row * cols : cols;
+      const sx = W / 2 + (col - (inRow - 1) / 2) * cw * 1.45;
+      const sy = H * 0.49 + (row - (rows - 1) / 2) * ch * 1.08;
+      const p = toPlane(sx - cw * 0.08, sy - ch * 0.06);
+      pos.set(pr.a, { x: p.x, y: p.y, z: 3, rz: ((pr.a.id * 13) % 9) - 4, up: true });
+      if (pr.d) pos.set(pr.d, { x: p.x + cw * 0.2, y: p.y + ch * 0.2, z: 9, rz: 10 + ((pr.d.id * 7) % 7), up: true });
+    });
+
+    // player hand (bottom), sorted, standing up toward the viewer
+    const ph = S.hands.p.sort((a, b) =>
+      ((a.s === S.trump) - (b.s === S.trump)) || (SUITS.indexOf(a.s) - SUITS.indexOf(b.s)) || (a.r - b.r));
+    const pn = ph.length;
+    const handY = Math.min(H * 0.84, H - ch * 0.7 - 18);
+    const pSp = pn > 1 ? Math.min(cw * 0.82, (W * 0.94 - cw * 1.1) / (pn - 1)) : 0;
+    ph.forEach((c, i) => {
+      const off = i - (pn - 1) / 2;
+      const lift = c === selected ? ch * 0.28 : 0;
+      const p = toPlane(W / 2 + off * pSp, handY + Math.abs(off) * Math.abs(off) * 0.9);
+      pos.set(c, { x: p.x, y: p.y - lift, z: 30 + i * 1.2 + (lift ? 25 : 0), rz: off * Math.min(3, 24 / pn),
+        rx: -TILT * 180 / Math.PI * 0.85, up: true, sc: 1.12 });
+    });
+
+    // playable hints
+    let playable = new Set();
+    if (!S.over && !busy) {
+      if (S.attacker === 'p' && (!S.table.length || S.taking || !unbeaten().length)) {
+        ph.filter(canAdd).forEach((c) => playable.add(c));
+      } else if (S.defender === 'p' && !S.taking) {
+        ph.filter((c) => unbeaten().some((p) => beats(c, p.a))).forEach((c) => playable.add(c));
+      }
+    }
+    const targets = new Set(selected ? unbeaten().filter((p) => beats(selected, p.a)).map((p) => p.a) : []);
+
+    for (const c of cards) {
+      const o = pos.get(c);
+      if (!o) continue;
+      if (fresh.has(c)) o.delay = fresh.get(c);
+      c.el.style.transition = instant ? 'none' : '';
+      place(c, o);
+      c.el.classList.toggle('playable', playable.has(c) && c !== selected);
+      c.el.classList.toggle('sel', c === selected);
+      c.el.classList.toggle('target', targets.has(c));
+      c.el.classList.toggle('trump-mark', c.s === S.trump);
+    }
+
+    placeBadge(deckBadge, deckS.x, deckS.y + ch * 0.72, S.deck.length ? `Колода: ${S.deck.length}` : 'Колода пуста');
+    placeBadge(trumpBadge, deckS.x, deckS.y - ch * 0.72, `Козырь ${S.trump}`);
+    placeBadge(aiBadge, W / 2, aiY + ch * 0.55, `Соперник: ${an}`, 50);
+    trumpBadge.style.color = RED.has(S.trump) ? '#ff8a8a' : '#fff';
+
+    // action button
+    let act = '', label = '';
+    if (!S.over && !busy) {
+      if (S.defender === 'p' && !S.taking && unbeaten().length) { act = 'take'; label = 'Беру'; }
+      else if (S.attacker === 'p' && S.taking) { act = 'pass'; label = 'Пас'; }
+      else if (S.attacker === 'p' && S.table.length && !unbeaten().length) { act = 'bito'; label = 'Бито'; }
+    }
+    actionBtn.dataset.act = act;
+    if (label) actionBtn.textContent = label;
+    actionBtn.classList.toggle('show', !!act);
+    actionBtn.classList.toggle('take', act === 'take');
+    scoreEl.textContent = `Победы ${score.w} · Поражения ${score.l}${score.d ? ' · Ничьи ' + score.d : ''}`;
+  }
+
+  // ---------- dialogs ----------
+  function showDialog(title, text, btn) {
+    document.getElementById('dlgTitle').textContent = title;
+    document.getElementById('dlgText').textContent = text;
+    document.getElementById('dlgBtn').textContent = btn;
+    overlay.hidden = false;
+  }
+  const helpHTML = document.getElementById('dlgText').innerHTML;
+  document.getElementById('dlgBtn').addEventListener('click', () => {
+    overlay.hidden = true;
+    if (!S || S.over) newGame();
+  });
+  document.getElementById('restartBtn').addEventListener('click', newGame);
+  document.getElementById('helpBtn').addEventListener('click', () => {
+    showDialog('Правила', '', S && !S.over ? 'Продолжить' : 'Играть');
+    document.getElementById('dlgText').innerHTML = helpHTML;
+  });
+  sceneEl.addEventListener('click', () => { if (selected) { selected = null; render(); } });
+  window.addEventListener('resize', resize);
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
+
+  resize();
+  // Show the table behind the start dialog.
+  S = { deck: shuffle(cards.slice()), trump: '♠', hands: { p: [], ai: [] }, table: [], discard: [], attacker: 'p',
+    defender: 'ai', limit: 6, taking: false, over: true, fresh: new Map() };
+  S.trump = S.deck[0].s;
+  render(true);
+})();
+</script>
+</body>
+</html>
