@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#171a20" />
+    <meta name="description" content="Sunset Kart — бесплатная 3D-карт-гонка прямо в браузере. Три круга, шесть гонщиков и один закат." />
+    <title>Sunset Kart — поймай свой закат</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="header">
+        <a class="brand" href="./" aria-label="Sunset Kart — главная"><span class="brand-icon">S<span>↗</span></span> SUNSET<span class="brand-light">KART</span><span class="edition">ARCADE RACING CLUB</span></a>
+        <div class="header-actions"><span class="live-dot"></span><span class="browser-label">НИЧЕГО ЛИШНЕГО. ТОЛЬКО ГОНКА.</span><button class="icon-button" id="sound" aria-label="Включить звук" title="Звук">♪<span class="sound-slash">/</span></button><button class="icon-button" id="fullscreen" aria-label="Полный экран" title="Полный экран">⛶</button></div>
+      </header>
+      <main>
+        <div class="page-heading"><div><div class="eyebrow"><span></span> МАЛЕНЬКИЙ КАРТ. БОЛЬШОЕ ПРИКЛЮЧЕНИЕ.</div><h1>Встретимся на <em>повороте.</em></h1></div><div class="session"><span class="session-dot"></span> ЛОКАЛЬНАЯ ГОНКА <span class="session-divider">/</span> 01—06</div></div>
+        <section class="game-shell" aria-label="Трёхмерная гоночная трасса">
+          <div id="scene"></div>
+          <div class="scene-grain"></div>
+          <div class="top-hud"><div class="track-tag"><span class="track-symbol">↗</span><div><span class="tiny-label">ТРАССА 01</span><strong>Солнечная долина</strong></div><span class="difficulty">ROOKIE</span></div><div class="race-hud" hidden><div><span class="tiny-label">ПОЗИЦИЯ</span><strong><span id="position">6</span><small> / 6</small></strong></div><div><span class="tiny-label">КРУГ</span><strong><span id="lap">1</span><small> / 3</small></strong></div><div class="time-stat"><span class="tiny-label">ВРЕМЯ</span><strong id="time">00:00.0</strong></div></div><button id="pause" class="pause-button" aria-label="Пауза" hidden>Ⅱ</button></div>
+          <div class="side-label">SUNSET VALLEY · 28°C · GOLDEN HOUR</div>
+          <div id="menu" class="menu"><div class="menu-copy"><div class="pill"><span></span> ТВОЙ СЛЕДУЮЩИЙ ЗАЕЗД</div><h2>Меньше тормозов.<br>Больше <span>закатов.</span></h2><p>Шесть картов. Три круга. Один победитель.<br>Забирай монеты, лови буст и оставь всех позади.</p><button id="start" class="primary-button">ПОГНАЛИ <span>↗</span></button><div class="start-note">БЕЗ СКАЧИВАНИЙ <span>·</span> БЕЗ РЕГИСТРАЦИИ</div></div><div class="track-card"><div class="track-card-heading"><span class="tiny-label">ТВОЙ МАРШРУТ</span><span>01 / 03</span></div><svg class="course-map" viewBox="0 0 220 130" aria-label="Схема трассы"><path id="menu-map"/><circle id="map-start" r="5"/></svg><div class="track-card-bottom"><span>3 КРУГА</span><span>6 ГОНЩИКОВ</span><span>∞ ФАНА</span></div></div></div>
+          <div id="countdown" class="countdown" aria-live="assertive" hidden></div>
+          <div id="driving-hud" hidden><div class="coins"><span>✦</span> <b id="coins">00</b><small>МОНЕТЫ</small></div><div class="speedometer"><div><strong id="speed">0</strong><span>КМ/Ч</span></div><div class="boost-track"><div id="boost-fill"></div></div><span class="boost-caption">НИТРО <span id="boost-label">ГОТОВО</span></span></div><div class="minimap"><svg viewBox="0 0 220 130"><path id="race-map"/><circle id="map-player" r="6"/></svg></div><div class="touch-controls"><div class="steering"><button id="left" aria-label="Повернуть налево">◀</button><button id="right" aria-label="Повернуть направо">▶</button></div><div class="pedals"><button id="drift" aria-label="Дрифт">ДРИФТ</button><button id="boost" aria-label="Нитро">ϟ <span>БУСТ</span></button></div></div></div>
+          <div id="overlay" class="overlay" hidden><div class="dialog"><span class="eyebrow" id="dialog-label">ПИТ-СТОП</span><h2 id="dialog-title">Выдохни.</h2><p id="dialog-description">Закат подождёт. Твоя гонка — на паузе.</p><button id="resume" class="primary-button">ПРОДОЛЖИТЬ <span>↗</span></button><button id="restart" class="text-button">Начать заново ↻</button></div></div>
+          <div id="error" class="error" hidden>Для гонки нужен WebGL. Открой страницу в актуальном Chrome и включи аппаратное ускорение.</div>
+          <div class="scene-bottom"><span><i></i> REAL-TIME 3D</span><span>СДЕЛАНО ДЛЯ ХОРОШЕГО НАСТРОЕНИЯ ↗</span></div>
+        </section>
+        <section class="instructions"><div class="instruction-title"><span class="keyboard-icon">⌘</span><div><strong>Освоишь за поворот.</strong><span>Газ — автоматически. Всё остальное — в твоих руках.</span></div></div><div class="key-hints"><span><kbd>←</kbd><kbd>→</kbd> Руль</span><span><kbd>SHIFT</kbd> Дрифт</span><span><kbd>SPACE</kbd> Буст</span><span><kbd>ESC</kbd> Пауза</span></div><span class="mobile-hint">Управляй кнопками на экране</span></section>
+      </main>
+      <footer><span>© 2026 SUNSET KART <span class="footer-divider">/</span> НЕ СПЕШИ. КРОМЕ КАК НА ТРАССЕ.</span><span>NO DOWNLOAD. JUST DRIVE. <span class="footer-spark">✳</span></span></footer>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
