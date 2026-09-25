@@ -1,0 +1,9 @@
+{
+  "appId": "com.sunsetkart.game",
+  "appName": "Sunset Kart",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#171a20",
+    "allowMixedContent": false
+  }
+}

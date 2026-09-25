@@ -15,7 +15,7 @@
 	"scripts": {
 		"setup": {
 			"enabled": true,
-			"command": null
+			"command": "npm ci && bash scripts/setup-android.sh"
 		},
 		"run": {
 			"enabled": true,
